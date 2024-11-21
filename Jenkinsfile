@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        registry = '637423326087.dkr.ecr.us-east-1.amazonaws.com/my-docker-repo-group12' // AWS ECR registry
+        registry = '767397928267.dkr.ecr.us-east-1.amazonaws.com/group20-docker-repo' // AWS ECR registry
         awsRegion = 'us-east-1'
     }
 
