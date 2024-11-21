@@ -40,7 +40,7 @@ pipeline {
         stage('Deploy with Helm') {
             steps {
                 echo 'Deploying webapp with Helm..'
-                sh "helm upgrade first --install helmchart --namespace model-serving --set image.tag=$BUILD_NUMBER"  // Deploy using Helm
+                sh "helm upgrade first --install helmchart --namespace helm-deployment --set image.tag=$BUILD_NUMBER"  // Deploy using Helm
             }
         }
     }
