@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        registry = '767397928267.dkr.ecr.us-east-1.amazonaws.com/group20-docker-repo' // AWS ECR registry
+        registry = '730335442368.dkr.ecr.us-east-1.amazonaws.com/group20-docker-repo' // AWS ECR registry
         awsRegion = 'us-east-1'
     }
 
@@ -30,9 +30,9 @@ pipeline {
                 script {
                     echo 'Pushing image to AWS ECR..'
                     // Login to AWS ECR
-                    sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 767397928267.dkr.ecr.us-east-1.amazonaws.com'
+                    sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 730335442368.dkr.ecr.us-east-1.amazonaws.com'
                     // Push the Docker image to ECR
-                    sh 'docker push 767397928267.dkr.ecr.us-east-1.amazonaws.com/group20-docker-repo:$BUILD_NUMBER'
+                    sh 'docker push 730335442368.dkr.ecr.us-east-1.amazonaws.com/group20-docker-repo:$BUILD_NUMBER'
                 }
             }
         }
