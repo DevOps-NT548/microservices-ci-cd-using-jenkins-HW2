@@ -40,11 +40,11 @@
 ## HƯỚNG DẪN CHẠY
 
 <a name="huongdan"></a>
-#### Khởi động github repo:
+### Khởi động github repo:
 - Để kiểm tra quá trình deployment, nhóm em sẽ sử dụng 1 web template có sẵn từ https://www.free-css.com/.
 - Sau khi tải 1 web template về, ta upload template đó lên github và sử dụng link github đó để tích hợp CI/CD.
 
-#### Set up EC2 trên server AWS:
+### Set up EC2 trên server AWS:
 - Ta tạo 2 EC2 instances (cấu hình là ubuntu và t2.small) đồng thời tạo 1 key-pair (như hình) sử dụng cho 2 instances này:
 ![Key pair](screenshots/keypair.jpg)
 - Sau khi tạo xong keypair, ta sử dụng keypair đó để tạo 2 EC2 instances (1 cái dùng cho Jenkins, 1 cái dùng cho SonarQube):
@@ -58,7 +58,7 @@ chmod 400 Group20.pem
 
 - Đồng thời, đổi tên 2 EC2 instances để dễ phân biệt
 
-#### Cài đặt Jenkins bên trong EC2 và setup webhook cơ bản:
+### Cài đặt Jenkins bên trong EC2 và setup webhook cơ bản:
 - Ta SSH vào trong Jenkins bằng lệnh:
 
 ```bash
@@ -98,7 +98,7 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ![webhook URL](screenshots/webhookURL.jpg)
 ![webhook Actions](screenshots/webhookActions.jpg)
 - Ta hoàn thành setup webhook kết nối với jenkins. Giờ mỗi lần ta push code lên github, jenkins pipeline sẽ tự động được kích hoạt (mặc dù hiện tại chưa làm gì cả).
-#### Cài đặt Sonarqube bên trong EC2 và tạo token:
+### Cài đặt Sonarqube bên trong EC2 và tạo token:
 - Tương tự với jenkins, ta SSH vào trong SonarQube bằng lệnh:
 ```bash
 ssh -i Group20.pem ubuntu@<SonarQubeEC2-publicIP>
@@ -134,23 +134,25 @@ cd linux-x86-64/
 - Ta lưu lại các configuration mà SonarQube đưa ra để sử dụng sau này:
 ![sonar Information](screenshots/sonarInformation.jpg)
 - Chuyển đến phần My account ở góc trên bên phải để tiến hành tạo token:
-
+![sonar Account](screenshots/sonarAccount.jpg)
 - Sau khi vào my account, chọn security, tạo 1 token với tên tùy ý và token type là Global Analysis Token và lưu lại token key:
-
-#### Tích hợp SonarQube-Scanner bên trong Jenkins pipeline:
+![sonar Token Generation](screenshots/sonarTokenGeneration.jpg)
+### Tích hợp SonarQube-Scanner bên trong Jenkins pipeline:
 - Quay trở về \<JenkinsEC2-publicIP>:8080, từ trang chủ, ta chuyển đến manage jenkins -> plugins -> available plugins và tải SonarQube Scanner plugin về
-
+![jenkins Sonar Plugin](screenshots/jenkinsSonarPlugin.jpg)
 - Chuyển đến manage jenkins -> tools -> SonarQube Scanner installations - > Add SonarQube Scanner với tên là SonarScanner
-
+![jenkins Sonar Scanner](screenshots/jenkinsSonarScanner.jpg)
+- Chuyển đến manage jenkins -> system -> SonarQube server -> Add SonarQube và tạo authentication token mới như sau (Secret là token key ta tạo ngay trên, ID là tùy ý):
+![jenkins Sonar Token](screenshots/jenkinsSonarToken.jpg)
 - Sau khi tạo xong token, ta dùng token đó để tạo SonarQube(Name chọn tùy ý, Server URL là https://\<SonarQubeEC2-publicIP>:9000 và server authentication token là ID của token ta vừa tạo):
-
+![jenkins Sonar Server](screenshots/jenkinsSonarServer.jpg)
 - Chuyển đến job -> configure -> Build steps -> Add build step -> Execute SonarQube Scanner:
-
+![jenkins Add BuildStep](screenshots/jenkinsAddBuildStep.jpg)
 - Ở analysis property, ta khai báo tên project đã tạo ở server sonarqube:
-
+![jenkins Analysis Properties](screenshots/jenkinsAnalysisProperties.jpg)
 - Sau khi đã hoàn thành các bước trên, ta có thể build thử từ trang chủ pipeline của jenkins. Sau khi build thử, ta đến web của SonarQube -> projects và có thể thấy kết quả scan code của SonarQube.
-
-#### Deploy App đến server Kubernetes:
+![sonars Proof](screenshots/sonarsProof.jpg)
+### Deploy App đến server Kubernetes:
 - Bên trong CLI của jenkins, ta chạy các lệnh sau để cài đặt kubernetes, eks, helm, docker và cấp permission cho jenkins: 
 ```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
@@ -197,3 +199,30 @@ sudo service docker stop
 sudo service docker start
 ```
 - Sau khi chạy xong những câu lệnh trên, nếu đúng, khi ta refresh web jenkins, jenkins sẽ restart, ta sẽ phải đăng nhập lại bằng tài khoản vừa tạo trước đó.
+- Tải thêm 2 plugins là docker và docker pipeline tương tự như tải plugin SonarQube Scanner đã hướng dẫn ở trên.
+- Tạo 1 ECR repo với các lựa chọn như sau:
+![ECR Repo Creation](screenshots/ECRRepoCreation.jpg)
+- Tạo 1 Dockerfile trên github để build docker image (dockerfile ở trên github).
+- Tạo 1 IAM role mới:
+![IAM Menu](screenshots/IAMMenu.jpg)
+- Chọn AWS service và use case EC2:
+![IAM profile](screenshots/IAMprofile.jpg)
+- Chọn policy AdministratorAccess -> next -> đặt tên cho IAM role -> hoàn tất.
+- Gán IAM role vừa tạo cho Jenkins instance:
+![jenkins Modify IAM](screenshots/jenkinsModifyIAM.jpg)
+- Chuyển đến terminal đang chạy server jenkins, chạy các dòng lệnh sau:
+```bash
+sudo su - jenkins
+eksctl create cluster --name eksGroup20 --region us-east-1 --nodegroup-name Group20Node --node-type t3.small --managed --nodes 1
+```
+- Sau khi create xong cluster ở trên, ta tạo 1 namespace mới tên helm-deployment bằng lệnh:
+```bash
+kubectl create ns helm-deployment
+```
+- Sử dụng helm để tạo helmchart giúp quá trình deploy (ta tạo template trước, sẽ thay đổi sau).
+- Quay trở lại trang chủ của jenkins, tạo thêm 1 job mới: pipeline job với tên tùy thích, sau khi tạo xong pipeline job, ta thay đổi các cấu hình tương tự như pipeline ở trên (Pipeline này sẽ dựa vào jenkinsfile trên github repo):
+![jenkins Deployment Pipeline](screenshots/jenkinsDeploymentPipeline.jpg)
+- Để hoàn thành pipeline CD, ta chỉ còn cần các thay đổi bên trong github: tạo dockerfile, jenkinsfile và hoàn tất helmchart:
+- Ở ECR repo ta vừa tạo ở trên, bấm vào push commands để lấy những thông tin cần thiết:
+![ECR Repo Information](screenshots/ECRRepoInformation.jpg)
+- 
