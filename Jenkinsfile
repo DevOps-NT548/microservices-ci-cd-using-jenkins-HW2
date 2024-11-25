@@ -15,7 +15,7 @@ pipeline {
         }
 
 
-        stage('Build Docker Image') {
+        stage('Build Docker Image') { 
             steps {
                 script {
                     echo 'Building image for webapp deployment..'
