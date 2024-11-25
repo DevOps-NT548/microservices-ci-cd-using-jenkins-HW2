@@ -40,3 +40,5 @@
 ## HƯỚNG DẪN CHẠY
 
 <a name="huongdan"></a>
+
+![Example Image](screenshots/analysisProperties.jpg)
