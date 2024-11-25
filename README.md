@@ -17,9 +17,9 @@
   - [ Set up EC2 trên server AWS: ](#setupEC2)
   - [ Cài đặt Jenkins bên trong EC2 và setup webhook cơ bản: ](#downloadJenkins)
   - [ Cài đặt Sonarqube bên trong EC2 và tạo token: ](#downloadSonarQube)
-  - [ Set up EC2 trên server AWS: ](#setupEC2)
-  - [ Set up EC2 trên server AWS: ](#setupEC2)
-
+  - [ Tích hợp SonarQube-Scanner bên trong Jenkins pipeline: ](#sonarQubeIntegration)
+  - [ Deploy App đến server Kubernetes: ](#appDeployment)
+  - [ Minh chứng ](#proof)
 ## GIỚI THIỆU MÔN HỌC
 
 <a name="gioithieumonhoc"></a>
