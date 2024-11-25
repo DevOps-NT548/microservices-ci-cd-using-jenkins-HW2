@@ -13,6 +13,12 @@
 - [ Giảng viên hướng dẫn](#giangvien)
 - [ Thành viên nhóm](#thanhvien)
 - [ Hướng dẫn chạy ](#huongdan)
+  - [ Khởi động github repo: ](#githubRepo)
+  - [ Set up EC2 trên server AWS: ](#setupEC2)
+  - [ Cài đặt Jenkins bên trong EC2 và setup webhook cơ bản: ](#downloadJenkins)
+  - [ Cài đặt Sonarqube bên trong EC2 và tạo token: ](#downloadSonarQube)
+  - [ Set up EC2 trên server AWS: ](#setupEC2)
+  - [ Set up EC2 trên server AWS: ](#setupEC2)
 
 ## GIỚI THIỆU MÔN HỌC
 
@@ -38,13 +44,16 @@
 | 3 | 22520864 | Làu Trường Minh |[LiuChangMinh88](https://github.com/LiuChangMing88) |22520864@gm.uit.edu.vn |
 
 ## HƯỚNG DẪN CHẠY
-
 <a name="huongdan"></a>
+
 ### Khởi động github repo:
+<a name="githubRepo"></a>
 - Để kiểm tra quá trình deployment, nhóm em sẽ sử dụng 1 web template có sẵn từ https://www.free-css.com/.
 - Sau khi tải 1 web template về, ta upload template đó lên github và sử dụng link github đó để tích hợp CI/CD.
 
 ### Set up EC2 trên server AWS:
+<a name="setupEC2"></a>
+
 - Ta tạo 2 EC2 instances (cấu hình là ubuntu và t2.small) đồng thời tạo 1 key-pair (như hình) sử dụng cho 2 instances này:
 ![Key pair](screenshots/keypair.jpg)
 - Sau khi tạo xong keypair, ta sử dụng keypair đó để tạo 2 EC2 instances (1 cái dùng cho Jenkins, 1 cái dùng cho SonarQube):
@@ -59,6 +68,8 @@ chmod 400 Group20.pem
 - Đồng thời, đổi tên 2 EC2 instances để dễ phân biệt
 
 ### Cài đặt Jenkins bên trong EC2 và setup webhook cơ bản:
+<a name="downloadJenkins"></a>
+
 - Ta SSH vào trong Jenkins bằng lệnh:
 
 ```bash
@@ -99,6 +110,8 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ![webhook Actions](screenshots/webhookActions.jpg)
 - Ta hoàn thành setup webhook kết nối với jenkins. Giờ mỗi lần ta push code lên github, jenkins pipeline sẽ tự động được kích hoạt (mặc dù hiện tại chưa làm gì cả).
 ### Cài đặt Sonarqube bên trong EC2 và tạo token:
+<a name="downloadSonarQube"></a>
+
 - Tương tự với jenkins, ta SSH vào trong SonarQube bằng lệnh:
 ```bash
 ssh -i Group20.pem ubuntu@<SonarQubeEC2-publicIP>
@@ -138,6 +151,8 @@ cd linux-x86-64/
 - Sau khi vào my account, chọn security, tạo 1 token với tên tùy ý và token type là Global Analysis Token và lưu lại token key:
 ![sonar Token Generation](screenshots/sonarTokenGeneration.jpg)
 ### Tích hợp SonarQube-Scanner bên trong Jenkins pipeline:
+<a name="sonarQubeIntegration"></a>
+
 - Quay trở về \<JenkinsEC2-publicIP>:8080, từ trang chủ, ta chuyển đến manage jenkins -> plugins -> available plugins và tải SonarQube Scanner plugin về
 ![jenkins Sonar Plugin](screenshots/jenkinsSonarPlugin.jpg)
 - Chuyển đến manage jenkins -> tools -> SonarQube Scanner installations - > Add SonarQube Scanner với tên là SonarScanner
@@ -153,6 +168,8 @@ cd linux-x86-64/
 - Sau khi đã hoàn thành các bước trên, ta có thể build thử từ trang chủ pipeline của jenkins. Sau khi build thử, ta đến web của SonarQube -> projects và có thể thấy kết quả scan code của SonarQube.
 ![sonars Proof](screenshots/sonarsProof.jpg)
 ### Deploy App đến server Kubernetes:
+<a name="appDeployment"></a>
+
 - Bên trong CLI của jenkins, ta chạy các lệnh sau để cài đặt kubernetes, eks, helm, docker và cấp permission cho jenkins: 
 ```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
@@ -223,6 +240,23 @@ kubectl create ns helm-deployment
 - Quay trở lại trang chủ của jenkins, tạo thêm 1 job mới: pipeline job với tên tùy thích, sau khi tạo xong pipeline job, ta thay đổi các cấu hình tương tự như pipeline ở trên (Pipeline này sẽ dựa vào jenkinsfile trên github repo):
 ![jenkins Deployment Pipeline](screenshots/jenkinsDeploymentPipeline.jpg)
 - Để hoàn thành pipeline CD, ta chỉ còn cần các thay đổi bên trong github: tạo dockerfile, jenkinsfile và hoàn tất helmchart:
-- Ở ECR repo ta vừa tạo ở trên, bấm vào push commands để lấy những thông tin cần thiết:
+- Ở ECR repo ta vừa tạo ở trên, bấm vào push commands để lấy những thông tin cần thiết (lệnh 1 để đăng nhập và lệnh 4 để push.):
 ![ECR Repo Information](screenshots/ECRRepoInformation.jpg)
-- 
+- Tạo 1 dockerfile với những dòng lệnh sau:
+![code Dockerfile](screenshots/codeDockerfile.jpg)
+- Di chuyển đến jenkinsfile, sử dụng thông tin ở ECR repo, thay đổi những dòng đã bôi đen trong hình:
+![code Jenkinsfile](screenshots/codeJenkinsfile.jpg)
+- Thực hiện tương tự với file values.yaml của helmchart:
+![code ValuesYAML](screenshots/codeValuesYAML.jpg)
+- Vậy là hoàn tất pipeline CI/CD.
+### Minh chứng:
+<a name="proof"></a>
+- Để kiểm tra pipeline CI/CD, ta update github repo bằng cách push ngẫu nhiên 1 thứ gì đó.
+- Sau khi push, SonarQube scanner sẽ được kích hoạt, ta có thể kiểm tra ở https://\<SonarQubeEC2-publicIP>:9000 -> projects:
+![sonarsProof](screenshots/sonarsProof.jpg)
+- Sau khi kiểm tra xong, code sẽ được deploy đến AWS repo. ta trích xuất PUBLIC IP để truy cập bằng cách chạy lệnh:
+```bash
+kubectl get svc --namespace helm-deployment -w
+```
+- Sau khi có được public IP, truy cập từ web browser để thấy được app:
+![websiteProof](screenshots/websiteProof.jpg)
